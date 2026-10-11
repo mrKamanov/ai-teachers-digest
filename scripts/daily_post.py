@@ -407,7 +407,6 @@ def main() -> int:
         return 1
     history = load_json(HISTORY_PATH, {"published": []})
     photo_cfg = cfg.get("photo", {})
-    credit = photo_cfg.get("credit", "Фото: Wikimedia Commons")
 
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
@@ -467,8 +466,6 @@ def main() -> int:
                 if verified:
                     log("photo verified but upload failed — publishing without image")
                     break
-            if media_token:
-                text += f"\n\n{credit}"
 
         posts_dir = ROOT / cfg.get("posts_dir", "posts")
         posts_dir.mkdir(exist_ok=True)

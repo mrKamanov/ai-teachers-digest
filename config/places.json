@@ -7,8 +7,7 @@
   "gemini_model": "gemini-3.8-flash",
   "photo": {
     "enabled": true,
-    "width": 1600,
-    "credit": "Фото: Wikimedia Commons"
+    "width": 1600
   },
   "places": [
     { "name": "Зона Молчания, Мексика", "hint": "пустыня, где падают метеориты и пропадает радиосвязь" },
