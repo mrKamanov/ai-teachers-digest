@@ -365,6 +365,11 @@ def main() -> int:
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
 
+    for entry in history.get("published", []):
+        if entry.get("date") == today and entry.get("published_to_max"):
+            log(f"пост за {today} уже опубликован в канал — выходим")
+            return 0
+
     existing = ROOT / cfg.get("posts_dir", "posts") / f"{today}.md"
     if existing.exists():
         log(f"пост за {today} уже сгенерирован — не перегенерирую")
@@ -434,6 +439,14 @@ def main() -> int:
         log("MAX_BOT_TOKEN/MAX_CHAT_ID не заданы — публикация пропущена")
         return 0
     ok = publish_to_max(text, media_token, max_token, chat_id)
+    if ok:
+        for entry in history.get("published", []):
+            if entry.get("date") == today:
+                entry["published_to_max"] = True
+        HISTORY_PATH.write_text(
+            json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        log("отметка: опубликовано сегодня")
     return 0 if ok else 1
 
 
