@@ -159,6 +159,9 @@ def commons_search(terms: list[str]) -> list[str]:
             title = item.get("title", "")
             if not re.match(r"File:.*\.(jpg|jpeg|png)$", title, re.I):
                 continue
+            if re.search(r"(?i)[_\-\s](map|srtm|dem|diagram|chart|schema|sketch|"
+                         r"plan|legend|labelled|labeled|relief|render|infographic)[_\-\s.]", title):
+                continue
             page = "https://commons.wikimedia.org/wiki/" + title.replace(" ", "_")
             if page not in pages:
                 pages.append(page)
@@ -262,8 +265,9 @@ def verify_image(data: bytes, mime: str, place_name: str, cfg) -> bool:
         "{\"match\": true|false, \"safe\": true|false, \"reason\": \"коротко\"}\n"
         "match=true ТОЛЬКО если на фото узнаваемо именно это место — допустимы разные "
         "ракурсы и расстояния, но объект должен быть главным на фото и его должно быть "
-        "возможно опознать. Это настоящая фотография (не карта, не коллаж, не рисунок, "
-        "не мем, не скриншот).\n"
+        "возможно опознать. Это настоящая фотография (не коллаж, не рисунок, "
+        "не мем, не скриншот, не карта, не схема, не инфографика, не цифровая модель "
+        "рельефа и не рендер.\n"
         "safe=false если есть: обнажённость, сексуальный контекст, насилие, оружие, "
         "дети в рискованных ситуациях, алкоголь/наркотики, религиозная/политическая "
         "символика-триггеры, чужие водяные знаки, реклама, расистская символика, "
