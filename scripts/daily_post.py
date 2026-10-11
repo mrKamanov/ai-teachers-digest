@@ -96,8 +96,8 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
             text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
             return text.strip()
         except urllib.error.HTTPError as exc:
-            if exc.code == 429 and attempt < 3:
-                log(f"gemini 429 (rate limit) — попытка {attempt + 2}/4")
+            if (exc.code == 429 or exc.code >= 500) and attempt < 3:
+                log(f"gemini {exc.code} — попытка {attempt + 2}/4")
                 continue
             log(f"gemini error: {exc}")
             return None
