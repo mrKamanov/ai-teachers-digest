@@ -85,15 +85,26 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
         url, data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json"},
     )
-    try:
-        with urllib.request.urlopen(req, timeout=180) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-        candidate = data["candidates"][0]
-        text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
-        return text.strip()
-    except Exception as exc:
-        log(f"gemini error: {exc}")
-        return None
+    for attempt, delay in enumerate((0, 25, 60, 120)):
+        if delay:
+            log(f"gemini: жду {delay}s перед повтором")
+            time.sleep(delay)
+        try:
+            with urllib.request.urlopen(req, timeout=180) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            candidate = data["candidates"][0]
+            text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
+            return text.strip()
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429 and attempt < 3:
+                log(f"gemini 429 (rate limit) — попытка {attempt + 2}/4")
+                continue
+            log(f"gemini error: {exc}")
+            return None
+        except Exception as exc:
+            log(f"gemini error: {exc}")
+            return None
+    return None
 
 
 def ask_gemini_post(prompt: str, cfg) -> str | None:
