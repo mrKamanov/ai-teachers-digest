@@ -213,8 +213,10 @@ def verify_image(data: bytes, mime: str, place_name: str, cfg) -> bool:
         f"{place_name}.\n"
         "Ответь СТРОГО одним JSON-объектом без пояснений:\n"
         "{\"match\": true|false, \"safe\": true|false, \"reason\": \"коротко\"}\n"
-        "match=true ТОЛЬКО если на фото изображён именно этот объект/место целиком, "
-        "это настоящая фотография (не карта, не коллаж, не рисунок, не мем, не скриншот).\n"
+        "match=true ТОЛЬКО если на фото узнаваемо именно это место — допустимы разные "
+        "ракурсы и расстояния, но объект должен быть главным на фото и его должно быть "
+        "возможно опознать. Это настоящая фотография (не карта, не коллаж, не рисунок, "
+        "не мем, не скриншот).\n"
         "safe=false если есть: обнажённость, сексуальный контекст, насилие, оружие, "
         "дети в рискованных ситуациях, алкоголь/наркотики, религиозная/политическая "
         "символика-триггеры, чужие водяные знаки, реклама, расистская символика, "
@@ -237,6 +239,19 @@ def verify_image(data: bytes, mime: str, place_name: str, cfg) -> bool:
     log(f"photo verdict: match={verdict.get('match')} safe={verdict.get('safe')} "
         f"({verdict.get('reason', '')})")
     return ok
+
+
+def extract_media_token(node, depth=0):
+    if depth > 6 or not isinstance(node, dict):
+        return None
+    token = node.get("token")
+    if isinstance(token, str) and token:
+        return token
+    for value in node.values():
+        found = extract_media_token(value, depth + 1)
+        if found:
+            return found
+    return None
 
 
 def get_photo_token(data: bytes, mime: str, token: str) -> str | None:
@@ -263,8 +278,12 @@ def get_photo_token(data: bytes, mime: str, token: str) -> str | None:
     )
     try:
         with urllib.request.urlopen(req, timeout=120) as resp:
-            media = json.loads(resp.read().decode("utf-8"))
-        media_token = media["photos"]["photoIds"]["token"]
+            raw = resp.read().decode("utf-8")
+        log(f"MAX upload response: {raw[:300]}")
+        media_token = extract_media_token(json.loads(raw))
+        if not media_token:
+            log("MAX image upload: token not found in response")
+            return None
         log("MAX image uploaded")
         return media_token
     except urllib.error.HTTPError as exc:
@@ -313,24 +332,25 @@ def extract_header_field(raw: str, field: str) -> str | None:
     return fm.group(1).strip() if fm else None
 
 
-def obtain_media_token(place_name, cfg, photo_page, verify=True) -> tuple[str | None, str | None]:
+def obtain_media_token(place_name, cfg, photo_page, verify=True):
+    """Returns (media_token, photo_page, verified)."""
     photo_cfg = cfg.get("photo", {})
     width = int(photo_cfg.get("width", 1600))
     direct = commons_image_url(photo_page, width)
     if not direct:
-        return None, photo_page
+        return None, photo_page, False
     dl = download_image(direct)
     if not dl:
-        return None, photo_page
+        return None, photo_page, False
     data, mime = dl
     if verify and not verify_image(data, mime, place_name, cfg):
-        log("photo rejected by vision check — publishing without image")
-        return None, photo_page
+        log("photo rejected by vision check")
+        return None, photo_page, False
     max_token = os.environ.get("MAX_BOT_TOKEN")
     if not max_token:
-        return None, photo_page
+        return None, photo_page, True
     media_token = get_photo_token(data, mime, max_token)
-    return media_token, photo_page
+    return media_token, photo_page, True
 
 
 def main() -> int:
@@ -357,7 +377,7 @@ def main() -> int:
         media_token = None
         if photo_page:
             log(f"photo: reusing {photo_page}")
-            media_token, _ = obtain_media_token(place_name, cfg, photo_page, verify=False)
+            media_token, _, _ = obtain_media_token(place_name, cfg, photo_page, verify=False)
     else:
         place, used = pick_place(cfg, history, today)
         if not place:
@@ -380,9 +400,12 @@ def main() -> int:
             log("photo: ищу фото на Викискладе")
             for candidate in find_photo_pages(place["name"], cfg):
                 log(f"photo: candidate {candidate}")
-                token, _ = obtain_media_token(place["name"], cfg, candidate, verify=True)
+                token, _, verified = obtain_media_token(place["name"], cfg, candidate, verify=True)
                 if token:
                     media_token, photo_page = token, candidate
+                    break
+                if verified:
+                    log("photo verified but upload failed — publishing without image")
                     break
             if media_token:
                 text += f"\n\n{credit}"
