@@ -29,7 +29,15 @@
       "date": "2026-10-11",
       "place": "Скеллиг-Майкл, Ирландия",
       "title": "Скеллиг-Майкл",
-      "photo": "https://commons.wikimedia.org/wiki/File:Skellig_Michael03(js).jpg"
+      "photo": "https://commons.wikimedia.org/wiki/File:Skellig_Michael03(js).jpg",
+      "published_to_max": true
+    },
+    {
+      "date": "2026-10-11",
+      "place": "Структура Ришат, Мавритания",
+      "title": "Структура Ришат",
+      "photo": "https://commons.wikimedia.org/wiki/File:Richat_Structure_-_SRTM.jpg",
+      "published_to_max": true
     }
   ]
 }
