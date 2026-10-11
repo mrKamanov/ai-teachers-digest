@@ -59,7 +59,11 @@ def ask_gemini(prompt: str, cfg) -> str | None:
     model = os.environ.get("GEMINI_MODEL") or cfg.get("gemini_model", "gemini-3.8-flash")
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.9, "maxOutputTokens": 4096},
+        "generationConfig": {
+            "temperature": 0.9,
+            "maxOutputTokens": 16384,
+            "thinkingConfig": {"thinkingBudget": 0},
+        },
     }
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
            f":generateContent?key={urllib.parse.quote(key)}")
@@ -71,7 +75,11 @@ def ask_gemini(prompt: str, cfg) -> str | None:
         with urllib.request.urlopen(req, timeout=180) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        return text.strip("`").strip() or None
+        text = text.strip("`").strip()
+        if len(text) < 1600:
+            log(f"post too short ({len(text)} chars) — treat as failure")
+            return None
+        return text
     except Exception as exc:
         log(f"gemini error: {exc}")
         return None
