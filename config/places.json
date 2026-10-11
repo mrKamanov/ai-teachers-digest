@@ -5,6 +5,11 @@
   "history_file": "history.json",
   "length": "2800-3600",
   "gemini_model": "gemini-3.8-flash",
+  "photo": {
+    "enabled": true,
+    "width": 1600,
+    "credit": "Фото: Wikimedia Commons"
+  },
   "places": [
     { "name": "Зона Молчания, Мексика", "hint": "пустыня, где падают метеориты и пропадает радиосвязь" },
     { "name": "Водопад Кровь, Антарктида", "hint": "красная полоса на леднике, под которой скрыто озеро" },

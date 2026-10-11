@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-"""Factum daily post: pick unused place -> Gemini writes story -> save + history -> publish to MAX."""
+"""Factum daily post: pick unused place -> Gemini writes story -> photo via search+vision check -> publish to MAX."""
+import base64
 import json
 import os
 import random
+import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,7 +19,10 @@ CONFIG_PATH = ROOT / "config" / "places.json"
 HISTORY_PATH = ROOT / "history.json"
 PROMPTS_DIR = ROOT / "prompts"
 
-MAX_API = "https://platform-api2.max.ru/messages"
+MAX_API = "https://platform-api2.max.ru"
+MAX_MESSAGES = MAX_API + "/messages"
+MAX_UPLOADS = MAX_API + "/uploads?type=image"
+USER_AGENT = "factum-bot/1.0 (github.com/mrKamanov/ai-teachers-digest)"
 
 
 def log(msg: str) -> None:
@@ -51,20 +58,27 @@ def build_prompt(cfg, place, history, style_example, prompt_tpl):
     )
 
 
-def ask_gemini(prompt: str, cfg) -> str | None:
+def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
+                max_tokens=16384, inline_image=None) -> str | None:
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
-        log("GEMINI_API_KEY не задан — пропускаю")
+        log("GEMINI_API_KEY не задан")
         return None
     model = os.environ.get("GEMINI_MODEL") or cfg.get("gemini_model", "gemini-3.8-flash")
+    parts = [{"text": prompt}]
+    if inline_image:
+        data, mime = inline_image
+        parts.append({"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode()}})
     payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
+        "contents": [{"parts": parts}],
         "generationConfig": {
-            "temperature": 0.9,
-            "maxOutputTokens": 16384,
+            "temperature": temperature,
+            "maxOutputTokens": max_tokens,
             "thinkingConfig": {"thinkingBudget": 0},
         },
     }
+    if tools:
+        payload["tools"] = tools
     url = (f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
            f":generateContent?key={urllib.parse.quote(key)}")
     req = urllib.request.Request(
@@ -74,37 +88,205 @@ def ask_gemini(prompt: str, cfg) -> str | None:
     try:
         with urllib.request.urlopen(req, timeout=180) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        text = text.strip("`").strip()
-        if len(text) < 1600:
-            log(f"post too short ({len(text)} chars) — treat as failure")
-            return None
-        return text
+        candidate = data["candidates"][0]
+        text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
+        return text.strip()
     except Exception as exc:
         log(f"gemini error: {exc}")
         return None
 
 
-def publish_to_max(text: str, place_name: str) -> bool:
-    token = os.environ.get("MAX_BOT_TOKEN")
-    chat_id = os.environ.get("MAX_CHAT_ID")
-    if not token or not chat_id:
-        log("MAX_BOT_TOKEN/MAX_CHAT_ID не заданы — публикация пропущена")
-        return False
-    url = f"{MAX_API}?chat_id={urllib.parse.quote(chat_id)}"
-    body = json.dumps({"text": text, "notify": True}).encode("utf-8")
-    req = urllib.request.Request(
-        url, data=body,
-        headers={"Content-Type": "application/json", "Authorization": token},
+def ask_gemini_post(prompt: str, cfg) -> str | None:
+    text = gemini_call(prompt, cfg, temperature=0.9)
+    if not text:
+        return None
+    text = text.strip("`").strip()
+    if len(text) < 1600:
+        log(f"post too short ({len(text)} chars) — treat as failure")
+        return None
+    return text
+
+
+def find_photo_pages(place_name: str, cfg) -> list[str]:
+    photo_cfg = cfg.get("photo", {})
+    if not photo_cfg.get("enabled", True):
+        return []
+    prompt = (
+        "Через поиск найди на Викискладе (commons.wikimedia.org) до трёх фотографий объекта: "
+        f"{place_name}.\n"
+        "Требования: на фото именно этот объект (не похожее место, не карта, не коллаж, "
+        "не рисунок, не скриншот, не фото с людей крупным планом без объекта).\n"
+        "Верни СТРОГО один JSON-массив URL-адресов страниц файлов, без пояснений:\n"
+        '["https://commons.wikimedia.org/wiki/File:...jpg", "..."]\n'
+        "Если подходящих фотографий нет — верни пустой массив []."
     )
+    text = gemini_call(prompt, cfg, tools=[{"googleSearch": {}}], temperature=0.1, max_tokens=2048)
+    if not text:
+        return []
+    pages = re.findall(r"https://commons\.wikimedia\.org/wiki/File:[^\s\"'<>\\,\]]+", text)
+    seen, result = set(), []
+    for page in pages:
+        if page.lower().endswith((".svg", ".gif", ".tif", ".tiff")):
+            continue
+        if page not in seen:
+            seen.add(page)
+            result.append(page)
+    if not result:
+        log("photo: commons file pages not found in search answer")
+    return result[:3]
+
+
+def commons_image_url(page_url: str, width: int) -> str | None:
+    m = re.match(r"https://commons\.wikimedia\.org/wiki/File:(.+)$", page_url)
+    if not m:
+        return None
+    filename = urllib.parse.unquote(m.group(1)).replace(" ", "_")
+    return ("https://commons.wikimedia.org/wiki/Special:FilePath/"
+            + urllib.parse.quote(filename) + f"?width={width}")
+
+
+def download_image(url: str) -> tuple[bytes, str] | None:
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
-            log(f"MAX publish: {resp.status}")
-            return resp.status == 200
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", "replace")[:300]
-        log(f"MAX publish error {exc.code}: {detail}")
+            data = resp.read()
+            mime = (resp.headers.get("Content-Type") or "").split(";")[0].strip().lower()
+    except Exception as exc:
+        log(f"photo download error: {exc}")
+        return None
+    if mime not in ("image/jpeg", "image/png"):
+        log(f"photo: unsupported mime {mime or 'unknown'}")
+        return None
+    if not (10_000 < len(data) < 20_000_000):
+        log(f"photo: bad size {len(data)} bytes")
+        return None
+    return data, mime
+
+
+def verify_image(data: bytes, mime: str, place_name: str, cfg) -> bool:
+    prompt = (
+        "Ты — строгий модератор. Тебе показали фото для поста про место: "
+        f"{place_name}.\n"
+        "Ответь СТРОГО одним JSON-объектом без пояснений:\n"
+        "{\"match\": true|false, \"safe\": true|false, \"reason\": \"коротко\"}\n"
+        "match=true ТОЛЬКО если на фото изображён именно этот объект/место целиком, "
+        "это настоящая фотография (не карта, не коллаж, не рисунок, не мем, не скриншот).\n"
+        "safe=false если есть: обнажённость, сексуальный контекст, насилие, оружие, "
+        "дети в рискованных ситуациях, алкоголь/наркотики, религиозная/политическая "
+        "символика-триггеры, чужие водяные знаки, реклама, расистская символика, "
+        "аварии/трупы, что-либо шокирующее или запрещённое к публикации."
+    )
+    text = gemini_call(prompt, cfg, temperature=0.0, max_tokens=1024,
+                       inline_image=(data, mime))
+    if not text:
         return False
+    m = re.search(r"\{.*\}", text, re.S)
+    if not m:
+        log(f"photo verdict unparseable: {text[:200]}")
+        return False
+    try:
+        verdict = json.loads(m.group(0))
+    except Exception:
+        log(f"photo verdict bad json: {text[:200]}")
+        return False
+    ok = bool(verdict.get("match")) and bool(verdict.get("safe"))
+    log(f"photo verdict: match={verdict.get('match')} safe={verdict.get('safe')} "
+        f"({verdict.get('reason', '')})")
+    return ok
+
+
+def get_photo_token(data: bytes, mime: str, token: str) -> str | None:
+    req = urllib.request.Request(
+        MAX_UPLOADS, method="POST",
+        headers={"Authorization": token, "Accept": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            upload_url = json.loads(resp.read().decode("utf-8"))["url"]
+    except Exception as exc:
+        log(f"MAX uploads error: {exc}")
+        return None
+    boundary = uuid.uuid4().hex
+    filename = "photo.jpg" if mime == "image/jpeg" else "photo.png"
+    body = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="data"; filename="{filename}"\r\n'
+        f"Content-Type: {mime}\r\n\r\n"
+    ).encode() + data + f"\r\n--{boundary}--\r\n".encode()
+    req = urllib.request.Request(
+        upload_url, data=body, method="POST",
+        headers={"Authorization": token, "Content-Type": f"multipart/form-data; boundary={boundary}"},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            media = json.loads(resp.read().decode("utf-8"))
+        media_token = media["photos"]["photoIds"]["token"]
+        log("MAX image uploaded")
+        return media_token
+    except urllib.error.HTTPError as exc:
+        log(f"MAX image upload error {exc.code}: {exc.read().decode('utf-8', 'replace')[:200]}")
+        return None
+    except Exception as exc:
+        log(f"MAX image upload error: {exc}")
+        return None
+
+
+def publish_to_max(text: str, media_token: str | None, max_token: str, chat_id: str) -> bool:
+    payload = {"text": text, "notify": True}
+    if media_token:
+        payload["attachments"] = [{"type": "image", "payload": {"token": media_token}}]
+    body = json.dumps(payload).encode("utf-8")
+    url = f"{MAX_MESSAGES}?chat_id={urllib.parse.quote(chat_id)}"
+    for attempt, delay in enumerate((0, 8, 15)):
+        if delay:
+            time.sleep(delay)
+        req = urllib.request.Request(
+            url, data=body,
+            headers={"Content-Type": "application/json", "Authorization": max_token},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                log(f"MAX publish: {resp.status}")
+                return resp.status == 200
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:300]
+            log(f"MAX publish error {exc.code}: {detail}")
+            if "not.ready" in detail and attempt < 2:
+                log("attachment not ready — retrying")
+                continue
+            return False
+        except Exception as exc:
+            log(f"MAX publish error: {exc}")
+            return False
+    return False
+
+
+def extract_header_field(raw: str, field: str) -> str | None:
+    m = re.search(rf"<!--(.*?)-->", raw)
+    if not m:
+        return None
+    fm = re.search(rf"{field}:\s*([^|]+)", m.group(1))
+    return fm.group(1).strip() if fm else None
+
+
+def obtain_media_token(place_name, cfg, photo_page, verify=True) -> tuple[str | None, str | None]:
+    photo_cfg = cfg.get("photo", {})
+    width = int(photo_cfg.get("width", 1600))
+    direct = commons_image_url(photo_page, width)
+    if not direct:
+        return None, photo_page
+    dl = download_image(direct)
+    if not dl:
+        return None, photo_page
+    data, mime = dl
+    if verify and not verify_image(data, mime, place_name, cfg):
+        log("photo rejected by vision check — publishing without image")
+        return None, photo_page
+    max_token = os.environ.get("MAX_BOT_TOKEN")
+    if not max_token:
+        return None, photo_page
+    media_token = get_photo_token(data, mime, max_token)
+    return media_token, photo_page
 
 
 def main() -> int:
@@ -113,6 +295,8 @@ def main() -> int:
         log("config/places.json не найден")
         return 1
     history = load_json(HISTORY_PATH, {"published": []})
+    photo_cfg = cfg.get("photo", {})
+    credit = photo_cfg.get("credit", "Фото: Wikimedia Commons")
 
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
@@ -124,7 +308,12 @@ def main() -> int:
         text = "\n".join(
             line for line in raw.splitlines() if not line.startswith("<!--")
         ).strip()
-        place_name = today
+        place_name = extract_header_field(raw, "place") or today
+        photo_page = extract_header_field(raw, "photo")
+        media_token = None
+        if photo_page:
+            log(f"photo: reusing {photo_page}")
+            media_token, _ = obtain_media_token(place_name, cfg, photo_page, verify=False)
     else:
         place, used = pick_place(cfg, history, today)
         if not place:
@@ -136,20 +325,35 @@ def main() -> int:
         style_example = (PROMPTS_DIR / Path(cfg["style_examples_file"]).name).read_text(encoding="utf-8")
         prompt = build_prompt(cfg, place, history, style_example, prompt_tpl)
 
-        text = ask_gemini(prompt, cfg)
+        text = ask_gemini_post(prompt, cfg)
         if not text:
             log("генерация не удалась — выходим без изменений")
             return 1
 
+        photo_page = None
+        media_token = None
+        if photo_cfg.get("enabled", True):
+            log("photo: ищу фото на Викискладе")
+            for candidate in find_photo_pages(place["name"], cfg):
+                log(f"photo: candidate {candidate}")
+                token, _ = obtain_media_token(place["name"], cfg, candidate, verify=True)
+                if token:
+                    media_token, photo_page = token, candidate
+                    break
+            if media_token:
+                text += f"\n\n{credit}"
+
         posts_dir = ROOT / cfg.get("posts_dir", "posts")
         posts_dir.mkdir(exist_ok=True)
-        header = f"<!-- place: {place['name']} | date: {today} -->\n\n"
+        photo_part = f" | photo: {photo_page}" if photo_page else ""
+        header = f"<!-- place: {place['name']} | date: {today}{photo_part} -->\n\n"
         existing.write_text(header + text, encoding="utf-8")
 
         history.setdefault("published", []).append({
             "date": today,
             "place": place["name"],
             "title": place["name"].split(",")[0],
+            **({"photo": photo_page} if photo_page else {}),
         })
         HISTORY_PATH.write_text(
             json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -157,12 +361,13 @@ def main() -> int:
         log(f"пост сохранён: {existing.name} ({len(text)} знаков)")
         place_name = place["name"]
 
-    try:
-        publish_to_max(text, place_name)
-    except Exception as exc:
-        log(f"MAX publish error: {exc}")
-        return 1
-    return 0
+    max_token = os.environ.get("MAX_BOT_TOKEN")
+    chat_id = os.environ.get("MAX_CHAT_ID")
+    if not max_token or not chat_id:
+        log("MAX_BOT_TOKEN/MAX_CHAT_ID не заданы — публикация пропущена")
+        return 0
+    ok = publish_to_max(text, media_token, max_token, chat_id)
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
