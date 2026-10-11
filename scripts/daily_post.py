@@ -96,10 +96,15 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
             text = candidate.get("content", {}).get("parts", [{}])[0].get("text", "")
             return text.strip()
         except urllib.error.HTTPError as exc:
+            detail = ""
+            try:
+                detail = exc.read().decode("utf-8", "replace")[:200]
+            except Exception:
+                pass
             if (exc.code == 429 or exc.code >= 500) and attempt < 3:
-                log(f"gemini {exc.code} — попытка {attempt + 2}/4")
+                log(f"gemini {exc.code} — попытка {attempt + 2}/4 {detail}")
                 continue
-            log(f"gemini error: {exc}")
+            log(f"gemini error: {exc} {detail}")
             return None
         except Exception as exc:
             log(f"gemini error: {exc}")
@@ -118,33 +123,61 @@ def ask_gemini_post(prompt: str, cfg) -> str | None:
     return text
 
 
+def photo_search_terms(place_name: str, cfg) -> list[str]:
+    prompt = (
+        f"Чтобы найти фото места «{place_name}» на Wikimedia Commons, придумай 3 "
+        "англоязычных поисковых запроса — точные английские названия объекта и места, "
+        "короткие, без кавычек и пояснений.\n"
+        'Верни строго JSON-массив строк. Пример: ["Skellig Michael island", "Skellig Rocks Ireland"]'
+    )
+    text = gemini_call(prompt, cfg, temperature=0.2, max_tokens=512)
+    if not text:
+        return []
+    m = re.search(r"\[.*\]", text, re.S)
+    if not m:
+        return []
+    try:
+        terms = json.loads(m.group(0))
+    except Exception:
+        return []
+    return [t.strip() for t in terms if isinstance(t, str) and t.strip()][:3]
+
+
+def commons_search(terms: list[str]) -> list[str]:
+    pages = []
+    for term in terms:
+        url = ("https://commons.wikimedia.org/w/api.php?action=query&list=search"
+               "&srnamespace=6&format=json&srlimit=6&srsearch=" + urllib.parse.quote(term))
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except Exception as exc:
+            log(f"commons search error: {exc}")
+            continue
+        for item in data.get("query", {}).get("search", []):
+            title = item.get("title", "")
+            if not re.match(r"File:.*\.(jpg|jpeg|png)$", title, re.I):
+                continue
+            page = "https://commons.wikimedia.org/wiki/" + title.replace(" ", "_")
+            if page not in pages:
+                pages.append(page)
+    return pages
+
+
 def find_photo_pages(place_name: str, cfg) -> list[str]:
     photo_cfg = cfg.get("photo", {})
     if not photo_cfg.get("enabled", True):
         return []
-    prompt = (
-        "Через поиск найди на Викискладе (commons.wikimedia.org) до трёх фотографий объекта: "
-        f"{place_name}.\n"
-        "Требования: на фото именно этот объект (не похожее место, не карта, не коллаж, "
-        "не рисунок, не скриншот, не фото с людей крупным планом без объекта).\n"
-        "Верни СТРОГО один JSON-массив URL-адресов страниц файлов, без пояснений:\n"
-        '["https://commons.wikimedia.org/wiki/File:...jpg", "..."]\n'
-        "Если подходящих фотографий нет — верни пустой массив []."
-    )
-    text = gemini_call(prompt, cfg, tools=[{"googleSearch": {}}], temperature=0.1, max_tokens=2048)
-    if not text:
+    terms = photo_search_terms(place_name, cfg)
+    if not terms:
+        log("photo: search terms not found")
         return []
-    pages = re.findall(r"https://commons\.wikimedia\.org/wiki/File:[^\s\"'<>\\,\]]+", text)
-    seen, result = set(), []
-    for page in pages:
-        if page.lower().endswith((".svg", ".gif", ".tif", ".tiff")):
-            continue
-        if page not in seen:
-            seen.add(page)
-            result.append(page)
-    if not result:
-        log("photo: commons file pages not found in search answer")
-    return result[:3]
+    log(f"photo: terms {terms}")
+    pages = commons_search(terms)[:5]
+    if not pages:
+        log("photo: no commons files found")
+    return pages
 
 
 def commons_image_url(page_url: str, width: int) -> str | None:
