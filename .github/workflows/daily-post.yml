@@ -27,8 +27,13 @@ jobs:
 
       - name: Trust MAX TLS certificates
         run: |
-          cat /etc/ssl/certs/ca-certificates.crt certs/russian_trusted_root_ca.pem certs/russian_trusted_sub_ca.pem \
-            | sed 's/\r$//' > /tmp/ca-bundle.pem
+          {
+            cat /etc/ssl/certs/ca-certificates.crt
+            sed 's/\r$//' certs/russian_trusted_root_ca.pem
+            echo
+            sed 's/\r$//' certs/russian_trusted_sub_ca.pem
+            echo
+          } > /tmp/ca-bundle.pem
           echo "SSL_CERT_FILE=/tmp/ca-bundle.pem" >> "$GITHUB_ENV"
 
       - name: Generate and publish post
