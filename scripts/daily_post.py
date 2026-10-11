@@ -4,6 +4,7 @@ import json
 import os
 import random
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
@@ -82,19 +83,20 @@ def publish_to_max(text: str, place_name: str) -> bool:
     if not token or not chat_id:
         log("MAX_BOT_TOKEN/MAX_CHAT_ID не заданы — публикация пропущена")
         return False
-    body = json.dumps({
-        "chat_id": int(chat_id),
-        "body": {"text": text},
-        "notify": True,
-    }).encode("utf-8")
+    url = f"{MAX_API}?chat_id={urllib.parse.quote(chat_id)}"
+    body = json.dumps({"text": text, "notify": True}).encode("utf-8")
     req = urllib.request.Request(
-        MAX_API, data=body,
+        url, data=body,
         headers={"Content-Type": "application/json", "Authorization": token},
     )
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        ok = resp.status == 200
-    log(f"MAX publish: {resp.status}")
-    return ok
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            log(f"MAX publish: {resp.status}")
+            return resp.status == 200
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", "replace")[:300]
+        log(f"MAX publish error {exc.code}: {detail}")
+        return False
 
 
 def main() -> int:
