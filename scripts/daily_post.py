@@ -165,11 +165,58 @@ def commons_search(terms: list[str]) -> list[str]:
     return pages
 
 
-def find_photo_pages(place_name: str, cfg) -> list[str]:
+def pick_place_ai(history, cfg):
+    """Gemini выбирает новое место; возвращает {name, hint, terms} или None."""
+    used = "\n".join(f"- {e['place']}" for e in history.get("published", [])) or "- пока пусто"
+    prompt = (
+        "Ты — редактор канала с постами-историями о необычных местах планеты. "
+        "Выбери одно НОВОЕ место для сегодняшнего поста.\n"
+        "Уже опубликовано (не предлагай эти места или объекты из них, даже если "
+        "по-другому):\n" + used + "\n"
+        "Требования:\n"
+        "- реально существующее место, о котором есть что рассказать: факты, история, тайны\n"
+        "- необычное, удивляющее; НЕ мейнстрим-туризм (не Эйфелева башня, не Колизей, "
+        "не Мачу-Пикчу, не Байкал)\n"
+        "- разные регионы мира: не предлагай две подряд одной страны, если последний "
+        "пост был из той же\n"
+        '- "name" — кратко, в формате "Название, Страна", по-русски\n'
+        '- "hint" — 4-8 слов по-русски, о чём это место\n'
+        '- "terms" — 2-3 англоязычных запроса для поиска фото на Wikimedia Commons '
+        "(точные английские названия объекта)\n"
+        "Верни строго один JSON-объект без пояснений:\n"
+        '{"name": "...", "hint": "...", "terms": ["...", "..."]}'
+    )
+    text = gemini_call(prompt, cfg, temperature=0.9, max_tokens=1024)
+    if not text:
+        return None
+    m = re.search(r"\{.*\}", text, re.S)
+    if not m:
+        log(f"place picker: bad answer: {text[:200]}")
+        return None
+    try:
+        sel = json.loads(m.group(0))
+    except Exception:
+        log(f"place picker: bad json: {text[:200]}")
+        return None
+    name = str(sel.get("name") or "").strip()
+    hint = str(sel.get("hint") or "").strip()
+    terms = [t.strip() for t in sel.get("terms") or [] if isinstance(t, str) and t.strip()]
+    if not name or len(name) > 100:
+        log(f"place picker: invalid name {name!r}")
+        return None
+    used_set = {e["place"].lower() for e in history.get("published", [])}
+    if name.lower() in used_set:
+        log(f"place picker: duplicate of history {name!r}")
+        return None
+    return {"name": name, "hint": hint or "необычное место", "terms": terms[:3]}
+
+
+def find_photo_pages(place_name: str, cfg, terms=None) -> list[str]:
     photo_cfg = cfg.get("photo", {})
     if not photo_cfg.get("enabled", True):
         return []
-    terms = photo_search_terms(place_name, cfg)
+    if not terms:
+        terms = photo_search_terms(place_name, cfg)
     if not terms:
         log("photo: search terms not found")
         return []
@@ -384,11 +431,19 @@ def main() -> int:
             log(f"photo: reusing {photo_page}")
             media_token, _, _ = obtain_media_token(place_name, cfg, photo_page, verify=False)
     else:
-        place, used = pick_place(cfg, history, today)
-        if not place:
-            log("все места из списка использованы — добавь новые в config/places.json")
-            return 0
-        log(f"тема: {place['name']}")
+        selection = pick_place_ai(history, cfg)
+        ai_terms = []
+        if selection:
+            place = {"name": selection["name"], "hint": selection["hint"]}
+            ai_terms = selection["terms"]
+            log(f"тема (AI): {place['name']}")
+        else:
+            log("place picker failed — пробую статичный список")
+            place, used = pick_place(cfg, history, today)
+            if not place:
+                log("места закончились, а выбор через Gemini не работает — проверь лог выше")
+                return 1
+            log(f"тема: {place['name']}")
 
         prompt_tpl = (PROMPTS_DIR / Path(cfg["prompt_file"]).name).read_text(encoding="utf-8")
         style_example = (PROMPTS_DIR / Path(cfg["style_examples_file"]).name).read_text(encoding="utf-8")
@@ -403,7 +458,7 @@ def main() -> int:
         media_token = None
         if photo_cfg.get("enabled", True):
             log("photo: ищу фото на Викискладе")
-            for candidate in find_photo_pages(place["name"], cfg):
+            for candidate in find_photo_pages(place["name"], cfg, terms=ai_terms):
                 log(f"photo: candidate {candidate}")
                 token, _, verified = obtain_media_token(place["name"], cfg, candidate, verify=True)
                 if token:
