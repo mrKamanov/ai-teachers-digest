@@ -54,4 +54,11 @@ jobs:
             exit 0
           fi
           git commit -m "post: $(date +%Y-%m-%d)"
-          git push
+          for i in 1 2 3; do
+            if git pull --rebase && git push; then
+              exit 0
+            fi
+            echo "push failed, attempt $i/3 — retrying in 10s"
+            sleep 10
+          done
+          exit 1
