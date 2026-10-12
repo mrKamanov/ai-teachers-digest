@@ -38,6 +38,13 @@
       "title": "Структура Ришат",
       "photo": "https://commons.wikimedia.org/wiki/File:Richat_Structure_-_SRTM.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-12",
+      "place": "Вулкан Иджен, Индонезия",
+      "title": "Вулкан Иджен",
+      "photo": "https://commons.wikimedia.org/wiki/File:Blue_fire_of_Ijen,_Kawah_Ijen,_Java,_Indonesia,_20220821_0432_9580.jpg",
+      "published_to_max": true
     }
   ]
 }
