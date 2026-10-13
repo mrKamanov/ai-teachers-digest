@@ -44,6 +44,13 @@
       "place": "Вулкан Иджен, Индонезия",
       "title": "Вулкан Иджен",
       "photo": "https://commons.wikimedia.org/wiki/File:Blue_fire_of_Ijen,_Kawah_Ijen,_Java,_Indonesia,_20220821_0432_9580.jpg"
+    },
+    {
+      "date": "2026-10-13",
+      "place": "Вулкан Даллол, Эфиопия",
+      "title": "Вулкан Даллол",
+      "photo": "https://commons.wikimedia.org/wiki/File:ET_Afar_asv2018-01_img48_Dallol.jpg",
+      "published_to_max": true
     }
   ]
 }
