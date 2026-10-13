@@ -64,7 +64,17 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
     if not key:
         log("GEMINI_API_KEY не задан")
         return None
-    model = os.environ.get("GEMINI_MODEL") or cfg.get("gemini_model", "gemini-3.8-flash")
+    env_models = os.environ.get("GEMINI_MODELS", "")
+    if env_models:
+        models = [m.strip() for m in env_models.split(",") if m.strip()]
+    else:
+        models = list(cfg.get("gemini_models") or [])
+        if not models:
+            primary = cfg.get("gemini_model", "gemini-3.8-flash")
+            models = [primary]
+            for fb in ("gemini-2.5-flash", "gemini-2.0-flash"):
+                if fb != primary:
+                    models.append(fb)
     parts = [{"text": prompt}]
     if inline_image:
         data, mime = inline_image
@@ -79,16 +89,18 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
     }
     if tools:
         payload["tools"] = tools
-    url = (f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
-           f":generateContent?key={urllib.parse.quote(key)}")
-    req = urllib.request.Request(
-        url, data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-    )
-    for attempt, delay in enumerate((0, 25, 60, 120)):
+    delays = (0, 20, 45, 90, 150, 240)
+    for attempt, delay in enumerate(delays):
         if delay:
             log(f"gemini: жду {delay}s перед повтором")
             time.sleep(delay)
+        model = models[attempt % len(models)]
+        url = (f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
+               f":generateContent?key={urllib.parse.quote(key)}")
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
         try:
             with urllib.request.urlopen(req, timeout=180) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
@@ -101,13 +113,15 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
                 detail = exc.read().decode("utf-8", "replace")[:200]
             except Exception:
                 pass
-            if (exc.code == 429 or exc.code >= 500) and attempt < 3:
-                log(f"gemini {exc.code} — попытка {attempt + 2}/4 {detail}")
+            if (exc.code == 429 or exc.code >= 500) and attempt < len(delays) - 1:
+                log(f"gemini {model} {exc.code} — попытка {attempt + 2}/{len(delays)} {detail}")
                 continue
             log(f"gemini error: {exc} {detail}")
             return None
         except Exception as exc:
-            log(f"gemini error: {exc}")
+            log(f"gemini error ({model}): {exc}")
+            if attempt < len(delays) - 1:
+                continue
             return None
     return None
 
