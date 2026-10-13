@@ -2,7 +2,10 @@ name: Factum Daily Post
 
 on:
   schedule:
-    - cron: "0 11 * * *"
+    # 14:00, 19:00 и 22:00 МСК — резервные слоты на случай задержек/сбоев
+    # cron у GitHub не гарантируется; защита published_to_max гарантирует
+    # ровно одну публикацию в день независимо от числа срабатываний
+    - cron: "0 11,16,19 * * *"
   workflow_dispatch:
 
 permissions:
