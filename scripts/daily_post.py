@@ -415,10 +415,19 @@ def main() -> int:
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y-%m-%d")
 
-    for entry in history.get("published", []):
-        if entry.get("date") == today and entry.get("published_to_max"):
-            log(f"пост за {today} уже опубликован в канал — выходим")
-            return 0
+    republish = (os.environ.get("INPUT_REPUBLISH_DATE") or "").strip()
+    if republish:
+        target = ROOT / cfg.get("posts_dir", "posts") / f"{republish}.md"
+        if not target.exists():
+            log(f"режим republish: пост за {republish} не найден — выходим")
+            return 1
+        log(f"режим republish: переотправляю пост за {republish}")
+        today = republish
+    else:
+        for entry in history.get("published", []):
+            if entry.get("date") == today and entry.get("published_to_max"):
+                log(f"пост за {today} уже опубликован в канал — выходим")
+                return 0
 
     existing = ROOT / cfg.get("posts_dir", "posts") / f"{today}.md"
     if existing.exists():
