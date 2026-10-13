@@ -72,7 +72,8 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
         if not models:
             primary = cfg.get("gemini_model", "gemini-3.8-flash")
             models = [primary]
-            for fb in ("gemini-2.5-flash", "gemini-2.0-flash"):
+            for fb in ("gemini-3.7-flash", "gemini-3.6-flash",
+                       "gemini-3.5-flash", "gemini-2.5-flash"):
                 if fb != primary:
                     models.append(fb)
     parts = [{"text": prompt}]
