@@ -51,6 +51,12 @@
       "title": "Вулкан Даллол",
       "photo": "https://commons.wikimedia.org/wiki/File:ET_Afar_asv2018-01_img48_Dallol.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-14",
+      "place": "Споттикай, Исландия",
+      "title": "Споттикай",
+      "published_to_max": true
     }
   ]
 }
