@@ -72,30 +72,35 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
         if not models:
             primary = cfg.get("gemini_model", "gemini-3.8-flash")
             models = [primary]
-            for fb in ("gemini-3.7-flash", "gemini-3.6-flash",
-                       "gemini-3.5-flash", "gemini-2.5-flash"):
+            for fb in ("gemini-3.5-flash-lite", "gemini-flash-lite-latest",
+                       "gemini-3.1-flash-lite", "gemini-3.7-flash"):
                 if fb != primary:
                     models.append(fb)
     parts = [{"text": prompt}]
     if inline_image:
         data, mime = inline_image
         parts.append({"inline_data": {"mime_type": mime, "data": base64.b64encode(data).decode()}})
-    payload = {
-        "contents": [{"parts": parts}],
-        "generationConfig": {
-            "temperature": temperature,
-            "maxOutputTokens": max_tokens,
-            "thinkingConfig": {"thinkingBudget": 0},
-        },
-    }
     if tools:
-        payload["tools"] = tools
+        base_tools = tools
+    else:
+        base_tools = None
     delays = (0, 20, 45, 90, 150, 240)
+    drop_thinking = False
     for attempt, delay in enumerate(delays):
         if delay:
             log(f"gemini: жду {delay}s перед повтором")
             time.sleep(delay)
         model = models[attempt % len(models)]
+        gen_cfg = {
+            "temperature": temperature,
+            "maxOutputTokens": max_tokens,
+        }
+        # lite-модели не принимают thinkingConfig (ошибка 400)
+        if not drop_thinking and "lite" not in model:
+            gen_cfg["thinkingConfig"] = {"thinkingBudget": 0}
+        payload = {"contents": [{"parts": parts}], "generationConfig": gen_cfg}
+        if base_tools:
+            payload["tools"] = base_tools
         url = (f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
                f":generateContent?key={urllib.parse.quote(key)}")
         req = urllib.request.Request(
@@ -114,6 +119,10 @@ def gemini_call(prompt, cfg, *, tools=None, temperature=0.9,
                 detail = exc.read().decode("utf-8", "replace")[:200]
             except Exception:
                 pass
+            if exc.code == 400 and "thinking" in detail:
+                log(f"gemini {model}: 400 из-за thinkingConfig — выключаю его и повторяю")
+                drop_thinking = True
+                continue
             if (exc.code == 429 or exc.code >= 500) and attempt < len(delays) - 1:
                 log(f"gemini {model} {exc.code} — попытка {attempt + 2}/{len(delays)} {detail}")
                 continue
