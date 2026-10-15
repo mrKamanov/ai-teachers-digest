@@ -57,6 +57,13 @@
       "place": "Споттикай, Исландия",
       "title": "Споттикай",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-15",
+      "place": "Озеро Споттед-Лейк, Канада",
+      "title": "Озеро Споттед-Лейк",
+      "photo": "https://commons.wikimedia.org/wiki/File:Spotted_Lake_Osoyoos.JPG",
+      "published_to_max": true
     }
   ]
 }
