@@ -64,6 +64,13 @@
       "title": "Озеро Споттед-Лейк",
       "photo": "https://commons.wikimedia.org/wiki/File:Spotted_Lake_Osoyoos.JPG",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-16",
+      "place": "Остров Сокотра, Йемен",
+      "title": "Остров Сокотра",
+      "photo": "https://commons.wikimedia.org/wiki/File:Dragonblood_tree_in_Socotra_2.jpg",
+      "published_to_max": true
     }
   ]
 }
