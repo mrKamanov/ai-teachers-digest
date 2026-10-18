@@ -78,6 +78,13 @@
       "title": "Остров Повелья",
       "photo": "https://commons.wikimedia.org/wiki/File:Poveglia_2.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-18",
+      "place": "Озеро Натрон, Танзания",
+      "title": "Озеро Натрон",
+      "photo": "https://commons.wikimedia.org/wiki/File:Lake_Natron,_Tanzania_(ASTER).jpg",
+      "published_to_max": true
     }
   ]
 }
