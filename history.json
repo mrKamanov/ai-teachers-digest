@@ -85,6 +85,13 @@
       "title": "Озеро Натрон",
       "photo": "https://commons.wikimedia.org/wiki/File:Lake_Natron,_Tanzania_(ASTER).jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-19",
+      "place": "Остров Сакоцон, Япония",
+      "title": "Остров Сакоцон",
+      "photo": "https://commons.wikimedia.org/wiki/File:Cats_in_aoshima_island_1.JPG",
+      "published_to_max": true
     }
   ]
 }
