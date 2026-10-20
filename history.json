@@ -92,6 +92,13 @@
       "title": "Остров Сакоцон",
       "photo": "https://commons.wikimedia.org/wiki/File:Cats_in_aoshima_island_1.JPG",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-20",
+      "place": "Пещера кристаллов, Мексика",
+      "title": "Пещера кристаллов",
+      "photo": "https://commons.wikimedia.org/wiki/File:Cristales_cueva_de_Naica.JPG",
+      "published_to_max": true
     }
   ]
 }
