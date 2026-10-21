@@ -99,6 +99,13 @@
       "title": "Пещера кристаллов",
       "photo": "https://commons.wikimedia.org/wiki/File:Cristales_cueva_de_Naica.JPG",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-21",
+      "place": "Озеро Хиллер, Австралия",
+      "title": "Озеро Хиллер",
+      "photo": "https://commons.wikimedia.org/wiki/File:Lake_Hillier_2_Middle_Island_Recherche_Archipelago_NR_IV-2011.JPG",
+      "published_to_max": true
     }
   ]
 }
