@@ -106,6 +106,13 @@
       "title": "Озеро Хиллер",
       "photo": "https://commons.wikimedia.org/wiki/File:Lake_Hillier_2_Middle_Island_Recherche_Archipelago_NR_IV-2011.JPG",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-22",
+      "place": "Долина Смерти, США",
+      "title": "Долина Смерти",
+      "photo": "https://commons.wikimedia.org/wiki/File:Deathvalleysky_nps_big.jpg",
+      "published_to_max": true
     }
   ]
 }
