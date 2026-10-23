@@ -113,6 +113,13 @@
       "title": "Долина Смерти",
       "photo": "https://commons.wikimedia.org/wiki/File:Deathvalleysky_nps_big.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-23",
+      "place": "Соляная шахта Величка, Польша",
+      "title": "Соляная шахта Величка",
+      "photo": "https://commons.wikimedia.org/wiki/File:Wieliczka,_Jana_Matejki;_Kopalnia_soli-_kierat_konny_węgierski;_A-580;_01.jpg",
+      "published_to_max": true
     }
   ]
 }
