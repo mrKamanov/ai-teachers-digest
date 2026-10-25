@@ -126,6 +126,12 @@
       "place": "Остров Кеймада-Гранди, Бразилия",
       "title": "Остров Кеймада-Гранди",
       "photo": "https://commons.wikimedia.org/wiki/File:Ilha_da_Queimada_Grande_-_Itanhaém2.jpg"
+    },
+    {
+      "date": "2026-10-25",
+      "place": "Зоринге, Япония",
+      "title": "Зоринге",
+      "published_to_max": true
     }
   ]
 }
