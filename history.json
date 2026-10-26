@@ -132,6 +132,13 @@
       "place": "Зоринге, Япония",
       "title": "Зоринге",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-26",
+      "place": "Остров Забова, Канада",
+      "title": "Остров Забова",
+      "photo": "https://commons.wikimedia.org/wiki/File:Sable_Island_Sentinel-2.jpg",
+      "published_to_max": true
     }
   ]
 }
