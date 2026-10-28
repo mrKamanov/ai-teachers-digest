@@ -145,6 +145,13 @@
       "place": "Деревня Ходжоры, Грузия",
       "title": "Деревня Ходжоры",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-28",
+      "place": "Колодец Чанд Баори, Индия",
+      "title": "Колодец Чанд Баори",
+      "photo": "https://commons.wikimedia.org/wiki/File:Chand_Baori_perspective_panorama_(July_2022).jpg",
+      "published_to_max": true
     }
   ]
 }
