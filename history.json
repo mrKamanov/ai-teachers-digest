@@ -159,6 +159,13 @@
       "title": "Озеро Кариба",
       "photo": "https://commons.wikimedia.org/wiki/File:Lake_Kariba.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-10-30",
+      "place": "Остров Пасхи, Чили",
+      "title": "Остров Пасхи",
+      "photo": "https://commons.wikimedia.org/wiki/File:Moai_Rano_raraku.jpg",
+      "published_to_max": true
     }
   ]
 }
