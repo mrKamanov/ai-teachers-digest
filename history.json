@@ -173,6 +173,13 @@
       "title": "Земля Вади-Рам",
       "photo": "https://commons.wikimedia.org/wiki/File:Wadi_Rum_BW_16.JPG",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-01",
+      "place": "Остров Норфолк, Австралия",
+      "title": "Остров Норфолк",
+      "photo": "https://commons.wikimedia.org/wiki/File:Norfolk_Island_jail1.jpg",
+      "published_to_max": true
     }
   ]
 }
