@@ -180,6 +180,13 @@
       "title": "Остров Норфолк",
       "photo": "https://commons.wikimedia.org/wiki/File:Norfolk_Island_jail1.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-02",
+      "place": "Озеро Каинды, Казахстан",
+      "title": "Озеро Каинды",
+      "photo": "https://commons.wikimedia.org/wiki/File:Kaindy_lake_south-east_Kazakhstan.jpg",
+      "published_to_max": true
     }
   ]
 }
