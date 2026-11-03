@@ -187,6 +187,13 @@
       "title": "Озеро Каинды",
       "photo": "https://commons.wikimedia.org/wiki/File:Kaindy_lake_south-east_Kazakhstan.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-03",
+      "place": "Остров Лорд-Хау, Австралия",
+      "title": "Остров Лорд-Хау",
+      "photo": "https://commons.wikimedia.org/wiki/File:Gallirallus_philippensis_Lord_Howe_Island_1.jpg",
+      "published_to_max": true
     }
   ]
 }
