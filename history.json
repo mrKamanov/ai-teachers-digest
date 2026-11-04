@@ -194,6 +194,13 @@
       "title": "Остров Лорд-Хау",
       "photo": "https://commons.wikimedia.org/wiki/File:Gallirallus_philippensis_Lord_Howe_Island_1.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-04",
+      "place": "Долина гейзеров, Камчатка",
+      "title": "Долина гейзеров",
+      "photo": "https://commons.wikimedia.org/wiki/File:Valley_of_Geysers_(Kamchatka,_2020)-3.jpg",
+      "published_to_max": true
     }
   ]
 }
