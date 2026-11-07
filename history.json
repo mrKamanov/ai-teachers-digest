@@ -215,6 +215,13 @@
       "title": "Остров Сарк",
       "photo": "https://commons.wikimedia.org/wiki/File:Sark_Seigneurie.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-07",
+      "place": "Врата ада (Кратер Дарваза), Туркменистан",
+      "title": "Врата ада (Кратер Дарваза)",
+      "photo": "https://commons.wikimedia.org/wiki/File:Darvasa_gas_crater_panorama_crop.jpg",
+      "published_to_max": true
     }
   ]
 }
