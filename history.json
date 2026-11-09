@@ -229,6 +229,13 @@
       "title": "Остров Трук",
       "photo": "https://commons.wikimedia.org/wiki/File:Bow_gun_of_the_Fujikawa_Maru_wreck,_Truk_Lagoon,_Micronesia.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-09",
+      "place": "Остров Хасима, Япония",
+      "title": "Остров Хасима",
+      "photo": "https://commons.wikimedia.org/wiki/File:Hashima,_Nagasaki,_Japan,_20240814_1421_3378.jpg",
+      "published_to_max": true
     }
   ]
 }
