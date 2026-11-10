@@ -236,6 +236,13 @@
       "title": "Остров Хасима",
       "photo": "https://commons.wikimedia.org/wiki/File:Hashima,_Nagasaki,_Japan,_20240814_1421_3378.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-10",
+      "place": "Остров Сейбл, Канада",
+      "title": "Остров Сейбл",
+      "photo": "https://commons.wikimedia.org/wiki/File:Sable_island.jpg",
+      "published_to_max": true
     }
   ]
 }
