@@ -243,6 +243,13 @@
       "title": "Остров Сейбл",
       "photo": "https://commons.wikimedia.org/wiki/File:Sable_island.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-11",
+      "place": "Озеро Ретба, Сенегал",
+      "title": "Озеро Ретба",
+      "photo": "https://commons.wikimedia.org/wiki/File:RetbaLake.png",
+      "published_to_max": true
     }
   ]
 }
