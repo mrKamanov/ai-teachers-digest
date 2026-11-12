@@ -250,6 +250,13 @@
       "title": "Озеро Ретба",
       "photo": "https://commons.wikimedia.org/wiki/File:RetbaLake.png",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-12",
+      "place": "Остров Сент-Килда, Великобритания",
+      "title": "Остров Сент-Килда",
+      "photo": "https://commons.wikimedia.org/wiki/File:St_Kilda_mailboat.jpg",
+      "published_to_max": true
     }
   ]
 }
