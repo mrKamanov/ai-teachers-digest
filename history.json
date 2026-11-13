@@ -257,6 +257,13 @@
       "title": "Остров Сент-Килда",
       "photo": "https://commons.wikimedia.org/wiki/File:St_Kilda_mailboat.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-13",
+      "place": "Гейзер Уилкокс, Невада",
+      "title": "Гейзер Уилкокс",
+      "photo": "https://commons.wikimedia.org/wiki/File:Fly_geyser.jpg",
+      "published_to_max": true
     }
   ]
 }
