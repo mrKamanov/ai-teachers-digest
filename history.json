@@ -264,6 +264,12 @@
       "title": "Гейзер Уилкокс",
       "photo": "https://commons.wikimedia.org/wiki/File:Fly_geyser.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-14",
+      "place": "Остров Централия, США",
+      "title": "Остров Централия",
+      "published_to_max": true
     }
   ]
 }
