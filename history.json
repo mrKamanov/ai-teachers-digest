@@ -270,6 +270,13 @@
       "place": "Остров Централия, США",
       "title": "Остров Централия",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-15",
+      "place": "Озеро Локтак, Индия",
+      "title": "Озеро Локтак",
+      "photo": "https://commons.wikimedia.org/wiki/File:Loktak_Lake_Manipur_01.jpg",
+      "published_to_max": true
     }
   ]
 }
