@@ -277,6 +277,13 @@
       "title": "Озеро Локтак",
       "photo": "https://commons.wikimedia.org/wiki/File:Loktak_Lake_Manipur_01.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-16",
+      "place": "Ледник Перито-Морено, Аргентина",
+      "title": "Ледник Перито-Морено",
+      "photo": "https://commons.wikimedia.org/wiki/File:Perito_Moreno_Glacier_Patagonia_Argentina_Luca_Galuzzi_2005.JPG",
+      "published_to_max": true
     }
   ]
 }
