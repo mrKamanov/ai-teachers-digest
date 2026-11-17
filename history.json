@@ -284,6 +284,13 @@
       "title": "Ледник Перито-Морено",
       "photo": "https://commons.wikimedia.org/wiki/File:Perito_Moreno_Glacier_Patagonia_Argentina_Luca_Galuzzi_2005.JPG",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-17",
+      "place": "Гора Рорайма, Венесуэла",
+      "title": "Гора Рорайма",
+      "photo": "https://commons.wikimedia.org/wiki/File:Kukenan_Roraima_GS.jpg",
+      "published_to_max": true
     }
   ]
 }
