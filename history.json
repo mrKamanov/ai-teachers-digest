@@ -291,6 +291,13 @@
       "title": "Гора Рорайма",
       "photo": "https://commons.wikimedia.org/wiki/File:Kukenan_Roraima_GS.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-18",
+      "place": "Остров Тромлин, Франция",
+      "title": "Остров Тромлин",
+      "photo": "https://commons.wikimedia.org/wiki/File:Tromelin_aerial_photograph.JPG",
+      "published_to_max": true
     }
   ]
 }
