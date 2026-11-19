@@ -298,6 +298,13 @@
       "title": "Остров Тромлин",
       "photo": "https://commons.wikimedia.org/wiki/File:Tromelin_aerial_photograph.JPG",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-19",
+      "place": "Подземный город Деринкую, Турция",
+      "title": "Подземный город Деринкую",
+      "photo": "https://commons.wikimedia.org/wiki/File:Derinkuyu_Underground_City_9831_Nevit_Enhancer.jpg",
+      "published_to_max": true
     }
   ]
 }
