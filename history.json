@@ -318,6 +318,12 @@
       "place": "Пещера Шондонг, Вьетнам",
       "title": "Пещера Шондонг",
       "photo": "https://commons.wikimedia.org/wiki/File:Son_Doong_Cave_DB_(2)-edited.jpg"
+    },
+    {
+      "date": "2026-11-22",
+      "place": "Деревня Нагoро, Япония",
+      "title": "Деревня Нагoро",
+      "published_to_max": true
     }
   ]
 }
