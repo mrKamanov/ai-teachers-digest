@@ -324,6 +324,13 @@
       "place": "Деревня Нагoро, Япония",
       "title": "Деревня Нагoро",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-24",
+      "place": "Алмазный кратер, ЮАР",
+      "title": "Алмазный кратер",
+      "photo": "https://commons.wikimedia.org/wiki/File:Open_pit_mine.jpg",
+      "published_to_max": true
     }
   ]
 }
