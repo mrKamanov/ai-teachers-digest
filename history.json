@@ -338,6 +338,13 @@
       "title": "Остров Спиналонга",
       "photo": "https://commons.wikimedia.org/wiki/File:20090620_Spinalogka_Elounta_panoramic_view_from_the_mountain.jpg",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-26",
+      "place": "Остров Марион, ЮАР",
+      "title": "Остров Марион",
+      "photo": "https://commons.wikimedia.org/wiki/File:Marion_Island,_South_Africa,_EO-1_ALI_satellite_image,_5_May_2009.jpg",
+      "published_to_max": true
     }
   ]
 }
