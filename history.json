@@ -351,6 +351,13 @@
       "place": "Гранд-Присмитик, Канада",
       "title": "Гранд-Присмитик",
       "published_to_max": true
+    },
+    {
+      "date": "2026-11-28",
+      "place": "Озеро Уюд, Боливия",
+      "title": "Озеро Уюд",
+      "photo": "https://commons.wikimedia.org/wiki/File:Piles_of_Salt_Salar_de_Uyuni_Bolivia_Luca_Galuzzi_2006_a.jpg",
+      "published_to_max": true
     }
   ]
 }
